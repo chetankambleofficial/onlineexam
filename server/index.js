@@ -4,11 +4,13 @@ const cors = require("cors");
 const session = require("express-session");
 const StudentModel = require("./models/students");
 const LecturesModel = require("./models/lectures");
-const Exam = require('./models/exam'); // Ensure it's pointing to the correct file
-
+const Exam = require('./models/exam'); 
+const Notice = require('./models/Notice');// Ensure it's pointing to the correct file
+const { exec } = require('child_process');
 const examRoutes = require('./routes/examRoutes');
 // Only require the result model once
-const Result = require('./models/results');
+const Result = require('./models/Result'); 
+const router = express.Router();
 
 // Initialize Express app
 const app = express();
@@ -147,7 +149,47 @@ app.post('/createexam', async (req, res) => {
         res.status(500).json({ message: 'Error creating exam', error: error.message });
     }
 });
+app.post("/createnotice", async (req, res) => {
+  const { lid, title, description } = req.body;
 
+  console.log("Request Body:", req.body);  // Log the incoming request body
+
+  // Validate input fields
+  if (!lid || !title || !description) {
+    return res.status(400).json({ message: "All fields (lid, title, description) are required." });
+  }
+
+  try {
+    // Create a new notice instance
+    const newNotice = new Notice({
+      lid,
+      title,
+      description,
+    });
+
+    // Save the notice to the database
+    const savedNotice = await newNotice.save();
+
+    console.log("Notice saved:", savedNotice);
+    return res.status(201).json({ message: "Notice created successfully!", notice: savedNotice });
+  } catch (error) {
+    console.error("Error saving notice:", error);
+    return res.status(500).json({ message: "Failed to create notice." });
+  }
+});
+
+
+
+// GET route to fetch all notices
+app.get('/displaynotice', async (req, res) => {
+  try {
+    const notices = await Notice.find(); // Fetch all notices
+    res.status(200).json(notices);
+  } catch (error) {
+    console.error('Error fetching notices:', error);
+    res.status(500).json({ message: 'Error fetching notices', error: error.message });
+  }
+});
 // Sample route to get all exams
 app.get('/finalexam', async (req, res) => {
     try {
@@ -181,23 +223,50 @@ app.post('/attend-exam', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-app.get('/api/exams/:Examid', async (req, res) => {
-    try {
-      const { Examid } = req.params;
+app.get('/api/exam/:id', async (req, res) => {
+  try {
+    const exam = await Exam.findOne({ Examid: req.params.id });
+    if (!exam) return res.status(404).send('Exam not found');
+    res.json(exam);
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+});
+// Replace with the actual path to your Result schema
+
+router.post('/api/exam/submit', async (req, res) => {
+  const { studentId, name, examId, answers } = req.body;
   
-      // Fetch the exam using Examid
-      const exam = await Exam.findOne({ Examid });
-  
-      if (!exam) {
-        return res.status(404).send('Exam not found');
-      }
-  
-      res.json(exam);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Server error');
-    }
-  });
+  // Check if all required details are provided
+  if (!studentId || !name || !examId || !answers) {
+    return res.status(400).json({ message: "Missing student or exam details" });
+  }
+
+  try {
+    // Calculate score (assuming you have a function to do so)
+    const score = calculateScore(answers);
+
+    // Create a new result object to store in the database
+    const result = new Result({
+      studentId,
+      name,
+      examId,
+      answers,
+      score,
+      total: 10, // Assuming total marks are 10
+    });
+
+    // Save the result to the database
+    await result.save();
+
+    // Return the response
+    res.status(200).json({ message: "Result saved successfully", score });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error saving result" });
+  }
+});
+
 
 // Route for attending the exam and submitting answers
 app.post('attendexam/:Examid', async (req, res) => {
@@ -230,6 +299,49 @@ app.post('attendexam/:Examid', async (req, res) => {
   });
   
 
+// Endpoint to run code and validate test cases
+app.post('/run-code', (req, res) => {
+  const { code, language, testCases } = req.body;
+
+  // Create a temporary file for the code
+  const fs = require('fs');
+  const filePath = `./temp.${language}`;
+
+  // Write the code to the file
+  fs.writeFileSync(filePath, code);
+
+  let command;
+  if (language === 'javascript') {
+      command = `node ${filePath}`;
+  } else if (language === 'python') {
+      command = `python ${filePath}`;
+  }
+
+  // Execute the code
+  exec(command, (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).json({ error: stderr });
+      }
+
+      const results = testCases.map((testCase, index) => {
+          const output = stdout.trim(); // Assuming output from code execution is valid
+          const isPassed = output === testCase.expected;
+          return {
+              input: testCase.input,
+              expected: testCase.expected,
+              output,
+              passed: isPassed,
+          };
+      });
+
+      // Remove the temporary file after execution
+      fs.unlinkSync(filePath);
+
+      // Send back the results
+      res.json({ results });
+    });
+  });
+  module.exports = router;
 // Start server
 app.listen(3001, () => {
   console.log("Server is running on http://localhost:3001");
