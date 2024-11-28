@@ -59,14 +59,7 @@ function LHome() {
               Issue Notice for Students
             </Link>
           </li>
-          <li>
-            <Link
-              to="/upload-modules"
-              className="text-white hover:text-gray-200 transition duration-300"
-            >
-              Upload Modules
-            </Link>
-          </li>
+          
         </ul>
       </motion.div>
 

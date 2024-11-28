@@ -21,6 +21,10 @@ import Notifications from "./Notifications";
 import StudyMaterials from "./StudyMaterials";
 import ExamRoom from "./ExamRoom";
 import CreateExam from "./CreateExam";
+import Console from "./Console";
+import CreateNotice from "./CreateNotice";
+import DispalyNotice from "./DisplayNOtice";
+import SExam from "./Sexam";
 function App() {
   return (
     <Router>
@@ -165,6 +169,38 @@ function App() {
           element={
             <ProtectedRoute role="student">
               <AttendExam />
+            </ProtectedRoute>
+          }
+        />
+           <Route
+          path="/Console"
+          element={
+            <ProtectedRoute role="student">
+              <Console />
+            </ProtectedRoute>
+          }
+        />
+              <Route
+          path="/createnotice"
+          element={
+            <ProtectedRoute role="lecturer">
+              <CreateNotice />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/displaynotice"
+          element={
+            <ProtectedRoute role="student">
+              <DispalyNotice />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sexam"
+          element={
+            <ProtectedRoute role="student">
+              <SExam />
             </ProtectedRoute>
           }
         />

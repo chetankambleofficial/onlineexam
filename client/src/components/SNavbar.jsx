@@ -126,33 +126,22 @@ function SHome() {
               console
             </Link>
           </li>
-          
+          <li>
+            <Link
+              to="/study-materials"
+              className="text-white hover:text-gray-200 transition duration-300"
+            >
+              Study Materials
+            </Link>
+          </li>
         </ul>
-      </motion.div>
+  
 
       {/* Content Area */}
-      <div className="flex-1 p-6 ml-64">
-        <div className="flex justify-between items-center mb-6">
-          {/* Sidebar Toggle */}
-          <button
-            onClick={toggleSidebar}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md md:hidden"
-          >
-            {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-          </button>
-        </div>
+    
 
         {/* Page content */}
-        <h1 className="text-4xl font-semibold text-gray-800">Student Home</h1>
-        <p className="mt-4 text-lg text-gray-600">
-          Welcome to your student dashboard. Here you can view your exams, results, notifications, and study materials.
-        </p>
-        <button
-          onClick={logout}
-          className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition duration-300"
-        >
-          Logout
-        </button>
+      
       </div>
     </div>
   );
